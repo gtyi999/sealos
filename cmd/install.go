@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/fanux/sealos/install"
 	"github.com/spf13/cobra"
 	"os"
@@ -32,7 +33,9 @@ var installCmd = &cobra.Command{
 		install.AppInstall(AppURL)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		fmt.Println("into install PreRun satrt")
 		if install.ExitInstallCase(AppURL)  {
+
 			cmd.Help()
 			os.Exit(install.ErrorExitOSCase)
 		}

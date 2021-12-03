@@ -56,6 +56,8 @@ func ExitInitCase() bool {
 }
 
 func ExitInstallCase(pkgUrl string) bool {
+
+	fmt.Println("into ExitInstallCase start")
 	// values.yaml 使用了-f 但是文件不存在.
 	if Values != "" && !FileExist(Values) {
 		logger.Error("your values File is not exist, Please check your Values.yaml is exist")
@@ -70,6 +72,7 @@ func ExitInstallCase(pkgUrl string) bool {
 }
 
 func pkgUrlCheck(pkgUrl string)  bool {
+	fmt.Println("into pkgUrlCheck start")
 	if !strings.HasPrefix(pkgUrl, "http") && !FileExist(pkgUrl) {
 		message = ErrorFileNotExist
 		logger.Error(message + "please check where your PkgUrl is right?")

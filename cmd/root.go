@@ -44,14 +44,18 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	fmt.Println("into Execute")
+	fmt.Println("into Execute start")
 	if err := rootCmd.Execute(); err != nil {
+		fmt.Println("Execute err")
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	fmt.Println("into Execute end")
 }
 
 func init() {
+	fmt.Println("into root init start")
 	cobra.OnInitialize(initConfig)
 	logger.Cfg()
 	// Here you will define your flags and configuration settings.
@@ -62,6 +66,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	fmt.Println("into root init end")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -12,6 +12,7 @@ import (
 
 //BuildInit is
 func BuildInit() {
+	fmt.Println("into BuildInit start")
 	MasterIPs = ParseIPs(MasterIPs)
 	NodeIPs = ParseIPs(NodeIPs)
 	// 所有master节点

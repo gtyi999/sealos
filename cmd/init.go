@@ -48,6 +48,7 @@ var initCmd = &cobra.Command{
 	--node 192.168.0.5 --user root --passwd your-server-password \
 	--version v1.18.0 --pkg-url=/root/kube1.18.0.tar.gz`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("into init Run")
 		c := &install.SealConfig{}
 		// 没有重大错误可以直接保存配置. 但是apiservercertsans为空. 但是不影响用户 clean
 		c.Dump("")
@@ -57,6 +58,7 @@ var initCmd = &cobra.Command{
 		fmt.Println(contact)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
+		fmt.Println("into init PreRun")
 		if install.ExitInitCase() {
 			cmd.Help()
 			os.Exit(install.ErrorExitOSCase)
@@ -65,6 +67,7 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
+	fmt.Println("into init init start")
 	rootCmd.AddCommand(initCmd)
 
 	// Here you will define your flags and configuration settings.
