@@ -2,6 +2,7 @@ package sshutil
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/wonderivan/logger"
 	"io"
 	"strings"
@@ -21,6 +22,7 @@ func (ss *SSH) Cmd(host string, cmd string) []byte {
 	}
 	defer session.Close()
 	b, err := session.CombinedOutput(cmd)
+	fmt.Println("CombinedOutput cmd=",cmd)
 	logger.Debug("[ssh][%s]command result is: %s", host, string(b))
 	defer func() {
 		if r := recover(); r != nil {
@@ -92,11 +94,14 @@ func (ss *SSH) CmdAsync(host string, cmd string) error {
 
 //CmdToString is in host exec cmd and replace to spilt str
 func (ss *SSH) CmdToString(host, cmd, spilt string) string {
+	fmt.Println("into CmdToString start")
 	data := ss.Cmd(host, cmd)
+	fmt.Println("date=",string(data))
 	if data != nil {
 		str := string(data)
 		str = strings.ReplaceAll(str, "\r\n", spilt)
 		return str
 	}
+
 	return ""
 }

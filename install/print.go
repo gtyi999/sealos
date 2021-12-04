@@ -8,6 +8,8 @@ import (
 
 //Print is
 func (s *SealosInstaller) Print(process ...string) {
+
+
 	if len(process) == 0 {
 		configJson, _ := json.Marshal(s)
 		logger.Info("\n[globals]sealos config is: ", string(configJson))

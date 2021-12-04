@@ -36,7 +36,9 @@ func BuildInit() {
 	//不用kubeadm init加选项跳过[kubeconfig]的阶段
 	i.CreateKubeconfig()
 
+	//这里比较重要 安装master0
 	i.InstallMaster0()
+
 	i.Print("SendPackage", "KubeadmConfigInstall", "InstallMaster0")
 	if len(masters) > 1 {
 		i.JoinMasters(i.Masters[1:])
@@ -92,8 +94,13 @@ func getDefaultSANs() []string {
 }
 
 func (s *SealosInstaller) GenerateCert() {
+
+
 	//cert generator in sealos
 	hostname := GetRemoteHostName(s.Masters[0])
+	fmt.Println("GetRemoteHostName hostname=",hostname)
+	fmt.Println("start GenerateCert, CertPath=",CertPath, ",CertEtcdPath=",CertEtcdPath,",ApiServerCertSANs=",ApiServerCertSANs,",IpFormat(s.Masters[0])=",IpFormat(s.Masters[0]))
+	fmt.Println("SvcCIDR=",SvcCIDR,",DnsDomain=",DnsDomain)
 	cert.GenerateCert(CertPath, CertEtcdPath, ApiServerCertSANs, IpFormat(s.Masters[0]), hostname, SvcCIDR, DnsDomain)
 	//copy all cert to master0
 	//CertSA(kye,pub) + CertCA(key,crt)
@@ -104,6 +111,7 @@ func (s *SealosInstaller) GenerateCert() {
 func (s *SealosInstaller) CreateKubeconfig() {
 	hostname := GetRemoteHostName(s.Masters[0])
 
+	fmt.Println("1111CreateKubeconfig,CertPath=",CertPath)
 	certConfig := cert.Config{
 		Path:     CertPath,
 		BaseName: "ca",
@@ -113,6 +121,8 @@ func (s *SealosInstaller) CreateKubeconfig() {
 
 	err := cert.CreateJoinControlPlaneKubeConfigFiles(cert.SealosConfigDir,
 		certConfig, hostname, controlPlaneEndpoint, "kubernetes")
+
+	fmt.Println("2222CreateKubeconfig,cert.SealosConfigDir=",cert.SealosConfigDir,",controlPlaneEndpoint=",controlPlaneEndpoint)
 	if err != nil {
 		logger.Error("generator kubeconfig failed %s", err)
 		os.Exit(-1)
@@ -122,6 +132,8 @@ func (s *SealosInstaller) CreateKubeconfig() {
 
 //InstallMaster0 is
 func (s *SealosInstaller) InstallMaster0() {
+
+	fmt.Println("into InstallMaster0 start")
 	s.SendKubeConfigs(s.Masters, true)
 
 	//master0 do sth
@@ -130,6 +142,7 @@ func (s *SealosInstaller) InstallMaster0() {
 
 	cmd = s.Command(Version, InitMaster)
 
+	fmt.Println("InstallMaster0 cmd=",cmd)
 	output := SSHConfig.Cmd(s.Masters[0], cmd)
 	if output == nil {
 		logger.Error("[%s]kubernetes install is error.please clean and uninstall.", s.Masters[0])

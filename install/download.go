@@ -16,6 +16,7 @@ import (
 //dst: /root
 //hook: cd /root && rm -rf kube && tar zxvf %s  && cd /root/kube/shell && sh init.sh
 func SendPackage(location string, hosts []string, dst string, before, after *string) string {
+	fmt.Println("into ")
 	location, md5 := downloadFile(location)
 	pkg := path.Base(location)
 	fullPath := fmt.Sprintf("%s/%s", dst, pkg)

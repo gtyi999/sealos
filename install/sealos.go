@@ -53,6 +53,8 @@ const JoinMaster CommandType = "joinMaster"
 const JoinNode CommandType = "joinNode"
 
 func (s *SealosInstaller) Command(version string, name CommandType) (cmd string) {
+
+	fmt.Println("into Command start")
 	cmds := make(map[CommandType]string)
 	cmds = map[CommandType]string{
 		InitMaster: `kubeadm init --config=/root/kubeadm-config.yaml --experimental-upload-certs` + vlogToStr(),

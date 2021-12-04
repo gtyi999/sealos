@@ -20,6 +20,8 @@ func (s *SealosInstaller) CheckValid() {
 	// 所有node节点
 	//nodes := append(Nodes, ParseIPs(NodeIPs)...)
 	//hosts := append(masters, nodes...)
+
+	fmt.Println("into CheckValid start")
 	var hosts []string
 	hosts = append(s.Masters, s.Nodes...)
 	if len(s.Hosts) == 0 && len(hosts) == 0 {

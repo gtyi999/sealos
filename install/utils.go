@@ -286,5 +286,7 @@ func GetRemoteHostName(hostIP string) string {
 func FetchSealosAbsPath() string {
 	ex, _ := os.Executable()
 	exPath := filepath.Dir(ex)
+
+	fmt.Println("FetchSealosAbsPath ex=",ex, ", exPath=",exPath)
 	return exPath + string(os.PathSeparator) + os.Args[0]
 }

@@ -52,7 +52,7 @@ var initCmd = &cobra.Command{
 		c := &install.SealConfig{}
 		// 没有重大错误可以直接保存配置. 但是apiservercertsans为空. 但是不影响用户 clean
 		c.Dump("")
-		install.BuildInit()
+		install.BuildInit() // 主流程在这里
 		// 安装完成后生成完整版
 		c.Dump("")
 		fmt.Println(contact)

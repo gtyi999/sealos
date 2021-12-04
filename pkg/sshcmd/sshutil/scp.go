@@ -22,6 +22,8 @@ func (ss *SSH) CopyForMD5(host, localFilePath, remoteFilePath, md5 string) bool 
 		md5 = md5sum.FromLocal(localFilePath)
 	}
 	logger.Debug("[ssh]source file md5 value is %s", md5)
+
+	fmt.Println("1111CopyForMD5 ,host=",host,",localFilePath=",localFilePath,",remoteFilePath=",remoteFilePath)
 	ss.Copy(host, localFilePath, remoteFilePath)
 	remoteMD5 := ss.Md5Sum(host, remoteFilePath)
 	logger.Debug("[ssh]host: %s , remote md5: %s", host, remoteMD5)

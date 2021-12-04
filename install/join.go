@@ -160,6 +160,8 @@ func (s *SealosInstaller) lvscare() {
 }
 
 func (s *SealosInstaller) sendCaAndKey(hosts []string) {
+
+	fmt.Println("sendCaAndKey start ")
 	//cert generator in sealos
 	caConfigs := cert.CaList(CertPath, CertEtcdPath)
 	SendPackage(CertPath+"/sa.key", hosts, cert.KubeDefaultCertPath, nil, nil)
@@ -171,8 +173,11 @@ func (s *SealosInstaller) sendCaAndKey(hosts []string) {
 }
 
 func (s *SealosInstaller) sendCerts(hosts []string) {
+
+	fmt.Println("sendCerts start")
 	certConfigs := cert.CertList(CertPath, CertEtcdPath)
 	for _, cert := range certConfigs {
+		fmt.Println("sendCerts SendPackage...")
 		SendPackage(path.Join(cert.Path, cert.BaseName+".key"), hosts, cert.DefaultPath, nil, nil)
 		SendPackage(path.Join(cert.Path, cert.BaseName+".crt"), hosts, cert.DefaultPath, nil, nil)
 	}
