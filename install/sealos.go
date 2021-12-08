@@ -40,9 +40,11 @@ var (
 
 //SealosInstaller is
 type SealosInstaller struct {
-	Hosts   []string
-	Masters []string
-	Nodes   []string
+	Hosts     []string
+	Masters   []string
+	Nodes     []string
+	Network   string
+	ApiServer string
 }
 
 type CommandType string
@@ -53,19 +55,33 @@ const JoinMaster CommandType = "joinMaster"
 const JoinNode CommandType = "joinNode"
 
 func (s *SealosInstaller) Command(version string, name CommandType) (cmd string) {
-
-	fmt.Println("into Command start")
 	cmds := make(map[CommandType]string)
+	// Please convert your v1beta1 configuration files to v1beta2 using the
+	// "kubeadm config migrate" command of kubeadm v1.15.x, 因此1.14 版本不支持双网卡.
 	cmds = map[CommandType]string{
 		InitMaster: `kubeadm init --config=/root/kubeadm-config.yaml --experimental-upload-certs` + vlogToStr(),
 		JoinMaster: fmt.Sprintf("kubeadm join %s:6443 --token %s --discovery-token-ca-cert-hash %s --experimental-control-plane --certificate-key %s"+vlogToStr(), IpFormat(s.Masters[0]), JoinToken, TokenCaCertHash, CertificateKey),
 		JoinNode:   fmt.Sprintf("kubeadm join %s:6443 --token %s --discovery-token-ca-cert-hash %s"+vlogToStr(), VIP, JoinToken, TokenCaCertHash),
 	}
-	//other version
+	//other version >= 1.15.x
 	//todo
 	if VersionToInt(version) >= 115 {
 		cmds[InitMaster] = `kubeadm init --config=/root/kubeadm-config.yaml --upload-certs` + vlogToStr()
-		cmds[JoinMaster] = fmt.Sprintf("kubeadm join %s:6443 --token %s --discovery-token-ca-cert-hash %s --control-plane --certificate-key %s"+vlogToStr(), IpFormat(s.Masters[0]), JoinToken, TokenCaCertHash, CertificateKey)
+		cmds[JoinMaster] = "kubeadm join --config=/root/kubeadm-join-config.yaml " + vlogToStr()
+		cmds[JoinNode] = "kubeadm join --config=/root/kubeadm-join-config.yaml " + vlogToStr()
+	}
+
+	// version >= 1.16.x support kubeadm init --skip-phases=addon/kube-proxy
+	// version <= 115
+	// kubectl -n kube-system delete ds kube-proxy
+	// # Run on each node:
+	// iptables-restore <(iptables-save | grep -v KUBE)
+	if s.Network == "cilium" {
+		if VersionToInt(version) >= 116 {
+			cmds[InitMaster] = `kubeadm init --skip-phases=addon/kube-proxy --config=/root/kubeadm-config.yaml --upload-certs` + vlogToStr()
+		} else {
+			cmds[InitMaster] = `kubeadm init --config=/root/kubeadm-config.yaml --upload-certs` + vlogToStr()
+		}
 	}
 
 	v, ok := cmds[name]
@@ -96,13 +112,33 @@ func decodeJoinCmd(cmd string) {
 	stringSlice := strings.Split(cmd, " ")
 
 	for i, r := range stringSlice {
-		switch r {
-		case "--token":
+		r = strings.ReplaceAll(r, "\t", "")
+		r = strings.ReplaceAll(r, "\n", "")
+		r = strings.ReplaceAll(r, "\\", "")
+		r = strings.TrimSpace(r)
+		logger.Debug("[####]%d :%s:", i, r)
+		// switch r {
+		// case "--token":
+		// 	JoinToken = stringSlice[i+1]
+		// case "--discovery-token-ca-cert-hash":
+		// 	TokenCaCertHash = stringSlice[i+1]
+		// case "--certificate-key":
+		// 	CertificateKey = stringSlice[i+1][:64]
+		// }
+		if strings.Contains(r, "--token") {
 			JoinToken = stringSlice[i+1]
-		case "--discovery-token-ca-cert-hash":
+		}
+
+		if strings.Contains(r, "--discovery-token-ca-cert-hash") {
 			TokenCaCertHash = stringSlice[i+1]
-		case "--certificate-key":
+		}
+		
+		if strings.Contains(r, "--certificate-key") {
 			CertificateKey = stringSlice[i+1][:64]
 		}
 	}
+	logger.Debug("[####]JoinToken :%s", JoinToken)
+	logger.Debug("[####]TokenCaCertHash :%s", TokenCaCertHash)
+	logger.Debug("[####]CertificateKey :%s", CertificateKey)
+
 }

@@ -2,14 +2,15 @@ package install
 
 import (
 	"fmt"
-	"github.com/wonderivan/logger"
 	"os"
+
+	"github.com/wonderivan/logger"
 )
 
-// if can't access to hostName, set /etc/hosts
-func SetHosts(hostip, hostName string) {
-	cmd := fmt.Sprintf("cat /etc/hosts |grep %s || echo '%s %s' >> /etc/hosts", hostName, IpFormat(hostip), hostName)
-	SSHConfig.CmdAsync(hostip, cmd)
+// SetHosts set hosts. if can't access to hostName, set /etc/hosts
+func SetHosts(hostIP, hostName string) {
+	cmd := fmt.Sprintf("cat /etc/hosts |grep %s || echo '%s %s' >> /etc/hosts", hostName, IpFormat(hostIP), hostName)
+	SSHConfig.CmdAsync(hostIP, cmd)
 }
 
 //CheckValid is
@@ -20,8 +21,6 @@ func (s *SealosInstaller) CheckValid() {
 	// 所有node节点
 	//nodes := append(Nodes, ParseIPs(NodeIPs)...)
 	//hosts := append(masters, nodes...)
-
-	fmt.Println("into CheckValid start")
 	var hosts []string
 	hosts = append(s.Masters, s.Nodes...)
 	if len(s.Hosts) == 0 && len(hosts) == 0 {
@@ -35,6 +34,7 @@ func (s *SealosInstaller) CheckValid() {
 		os.Exit(1)
 	}
 	dict := make(map[string]bool)
+	var errList []string
 	for _, h := range s.Hosts {
 		hostname := SSHConfig.CmdToString(h, "hostname", "") //获取主机名
 		if hostname == "" {
@@ -50,5 +50,34 @@ func (s *SealosInstaller) CheckValid() {
 			}
 			logger.Info("[%s]  ------------ check ok", h)
 		}
+		if s.Network == "cilium" {
+			if err := SSHConfig.CmdAsync(h, "uname -r | grep 5 | awk -F. '{if($2>3)print \"ok\"}' | grep ok && exit 0 || exit 1"); err != nil {
+				logger.Error("[%s] ------------ check kernel version  < 5.3", h)
+				os.Exit(1)
+			}
+			if err := SSHConfig.CmdAsync(h, "mount bpffs -t bpf /sys/fs/bpf && mount | grep /sys/fs/bpf && exit 0 || exit 1"); err != nil {
+				logger.Error("[%s] ------------ mount  bpffs err", h)
+				os.Exit(1)
+			}
+		}
+
+		// version >= 1.20 , Add prefight for containerd
+		if For120(Version) {
+			// for containerd. if docker exist ; exit frist.
+			
+			dockerExist := SSHConfig.CmdToString(h, "command -v dockerd &> /dev/null && echo yes || :", "")
+			if dockerExist == "yes" {
+				errList = append(errList, h)
+			}
+		}
+	}
+
+	if len(errList) >= 1 {
+		logger.Error(`docker exist error when kubernetes version >= 1.20.
+sealos install kubernetes version >= 1.20 use containerd cri instead. 
+please uninstall docker on [%s]. For example run on centos7: "yum remove docker-ce containerd-io -y",  
+see details:  https://github.com/fanux/sealos/issues/582
+					`, errList)
+		os.Exit(-1)
 	}
 }

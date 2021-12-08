@@ -2,10 +2,10 @@ package sshutil
 
 import (
 	"bufio"
-	"fmt"
-	"github.com/wonderivan/logger"
 	"io"
 	"strings"
+
+	"github.com/wonderivan/logger"
 )
 
 //Cmd is in host exec cmd
@@ -22,7 +22,6 @@ func (ss *SSH) Cmd(host string, cmd string) []byte {
 	}
 	defer session.Close()
 	b, err := session.CombinedOutput(cmd)
-	fmt.Println("CombinedOutput cmd=",cmd)
 	logger.Debug("[ssh][%s]command result is: %s", host, string(b))
 	defer func() {
 		if r := recover(); r != nil {
@@ -36,8 +35,8 @@ func (ss *SSH) Cmd(host string, cmd string) []byte {
 }
 
 func readPipe(host string, pipe io.Reader, isErr bool) {
+	r := bufio.NewReader(pipe)
 	for {
-		r := bufio.NewReader(pipe)
 		line, _, err := r.ReadLine()
 		if line == nil {
 			return
@@ -56,7 +55,7 @@ func readPipe(host string, pipe io.Reader, isErr bool) {
 }
 
 func (ss *SSH) CmdAsync(host string, cmd string) error {
-	logger.Info("[ssh][%s] %s", host, cmd)
+	logger.Debug("[%s] %s", host, cmd)
 	session, err := ss.Connect(host)
 	if err != nil {
 		logger.Error("[ssh][%s]Error create ssh session failed,%s", host, err)
@@ -89,19 +88,16 @@ func (ss *SSH) CmdAsync(host string, cmd string) error {
 	}()
 	<-doneerr
 	<-doneout
-	return nil
+	return session.Wait()
 }
 
 //CmdToString is in host exec cmd and replace to spilt str
 func (ss *SSH) CmdToString(host, cmd, spilt string) string {
-	fmt.Println("into CmdToString start")
 	data := ss.Cmd(host, cmd)
-	fmt.Println("date=",string(data))
 	if data != nil {
 		str := string(data)
 		str = strings.ReplaceAll(str, "\r\n", spilt)
 		return str
 	}
-
 	return ""
 }

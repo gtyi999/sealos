@@ -15,11 +15,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fanux/sealos/cmd"
 )
 
 func main() {
-	fmt.Println("into main")
 	cmd.Execute()
 }

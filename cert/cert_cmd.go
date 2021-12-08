@@ -7,8 +7,8 @@ import (
 	"github.com/wonderivan/logger"
 )
 
-// return sealos cert command
-func CertCMD(altNames []string, hostIP, hostName, serviceCIRD, DNSDomain string) string {
+// CMD return sealos cert command
+func CMD(altNames []string, hostIP, hostName, serviceCIRD, DNSDomain string) string {
 	cmd := "sealos cert "
 	if hostIP != "" {
 		cmd += fmt.Sprintf(" --node-ip %s", hostIP)
@@ -19,7 +19,7 @@ func CertCMD(altNames []string, hostIP, hostName, serviceCIRD, DNSDomain string)
 	}
 
 	if serviceCIRD != "" {
-		cmd += fmt.Sprintf(" --service-cird %s", serviceCIRD)
+		cmd += fmt.Sprintf(" --service-cidr %s", serviceCIRD)
 	}
 
 	if DNSDomain != "" {
@@ -35,8 +35,9 @@ func CertCMD(altNames []string, hostIP, hostName, serviceCIRD, DNSDomain string)
 	return cmd
 }
 
-func GenerateCert(certPATH, certEtcdPATH string, altNames []string, hostIP, hostName, serviceCIRD, DNSDomian string) {
-	certConfig, err := NewSealosCertMetaData(certPATH, certEtcdPATH, altNames, serviceCIRD, hostName, hostIP, DNSDomian)
+// GenerateCert generate all cert.
+func GenerateCert(certPATH, certEtcdPATH string, altNames []string, hostIP, hostName, serviceCIRD, DNSDomain string) {
+	certConfig, err := NewSealosCertMetaData(certPATH, certEtcdPATH, altNames, serviceCIRD, hostName, hostIP, DNSDomain)
 	if err != nil {
 		logger.Error("generator cert config failed %s", err)
 		os.Exit(-1)

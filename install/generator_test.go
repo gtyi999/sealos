@@ -11,7 +11,7 @@ func Test_generatorKubeadmConfig(t *testing.T) {
 }
 
 func TestTemplate(t *testing.T) {
-	var masters = []string{"172.20.241.205", "172.20.241.206", "172.20.241.207"}
+	var masters = []string{"172.20.241.205:22", "172.20.241.206:22", "172.20.241.207:22"}
 	var vip = "10.103.97.1"
 	config := sshutil.SSH{
 		User:     "cuisongliu",
@@ -19,7 +19,26 @@ func TestTemplate(t *testing.T) {
 	}
 	MasterIPs = masters
 	VIP = vip
+	ApiServer = "apiserver.cluster.local"
 	config.Cmd("127.0.0.1", "echo \""+string(Template())+"\" > ~/aa")
+	t.Log(string(Template()))
+}
+
+func TestNetCiliumTemplate(t *testing.T) {
+	var masters = []string{"172.20.241.205:22", "172.20.241.206:22", "172.20.241.207:22"}
+	var vip = "10.103.97.1"
+	MasterIPs = masters
+	VIP = vip
+	ApiServer = "apiserver.cluster.local"
+	Version = "1.20.5"
+	Network = "cilium"
+	t.Log(string(Template()))
+	Network = "calico"
+	t.Log(string(Template()))
+	Version = "1.18.5"
+	Network = "cilium"
+	t.Log(string(Template()))
+	Network = "calico"
 	t.Log(string(Template()))
 }
 
@@ -107,3 +126,41 @@ func TestKubeadmDataFromYaml(t *testing.T) {
 		})
 	}
 }
+
+func TestJoinTemplate(t *testing.T) {
+	var masters = []string{"192.168.160.243:22"}
+	var vip = "10.103.97.1"
+	config := sshutil.SSH{
+		User:     "louis",
+		Password: "210010",
+		PkFile:   "/home/louis/.ssh/id_rsa",
+	}
+	Version = "v1.20.0"
+	MasterIPs = masters
+	JoinToken = "1y6yyl.ramfafiy99vz3tbw"
+	TokenCaCertHash = "sha256:a68c79c87368ff794ae50c5fd6a8ce13fdb2778764f1080614ddfeaa0e2b9d14"
+
+	VIP = vip
+	config.Cmd("127.0.0.1", "echo \""+string(JoinTemplate(IpFormat(masters[0]), "systemd"))+"\" > ~/aa")
+	t.Log(string(JoinTemplate(IpFormat(masters[0]), "cgroupfs")))
+
+	Version = "v1.19.0"
+	config.Cmd("127.0.0.1", "echo \""+string(JoinTemplate("", "systemd"))+"\" > ~/aa")
+	t.Log(string(JoinTemplate("", "cgroupfs")))
+}
+
+var tepJoin = `apiVersion: kubeadm.k8s.io/v1beta2
+caCertPath: /etc/kubernetes/pki/ca.crt
+discovery:
+  bootstrapToken: 
+    apiServerEndpoint: {{.Master0}}:6443
+    token: {{.TokenDiscovery}}
+    caCertHashes: 
+    - {{.TokenDiscoveryCAHash}}
+  timeout: 5m0s
+kind: JoinConfiguration
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: {{.Master}}
+    bindPort: 6443
+`
